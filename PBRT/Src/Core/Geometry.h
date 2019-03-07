@@ -285,6 +285,18 @@ namespace PBRT
         return (v / v.Length());
     }
 
+    template <typename T>
+    Vector2<T> Min(const Vector2<T> &v1, const Vector2<T> &v2)
+    {
+        return Vector2<T>(std::fmin(v1.x, v2.x), std::fmin(v1.y, v2.y));
+    }
+
+    template <typename T>
+    Vector2<T> Max(const Vector2<T> &v1, const Vector2<T> &v2)
+    {
+        return Vector2<T>(std::fmax(v1.x, v2.x), std::fmax(v1.y, v2.y));
+    }
+
     // --------------------------------------------------------------------
     // Vector3 functions
     template <typename T, typename U>
@@ -318,9 +330,9 @@ namespace PBRT
         double v1x = v1.x, v1y = v1.y, v1z = v1.z;
         double v2x = v2.x, v2y = v2.y, v2z = v2.z;
 
-        return Vector3<T>(v1y * v2z - v1z * v2y,
-                          v1z * v2x - v1x * v2z,
-                          v1x * v2y - v1y * v2x);
+        return Vector3<T>((T)(v1y * v2z - v1z * v2y),
+                          (T)(v1z * v2x - v1x * v2z),
+                          (T)(v1x * v2y - v1y * v2x));
     }
 
     template <typename T>
@@ -345,5 +357,41 @@ namespace PBRT
     int MaxDimension(const Vector3<T> &v)
     {
         return (v.x > v.y) ? ((v.x > v.z) ? 0 : 2) : ((v.y > v.z) ? 1 : 2);
+    }
+
+    template <typename T>
+    Vector3<T> Min(const Vector3<T> &v1, const Vector3<T> &v2)
+    {
+        return Vector3<T>(std::fmin(v1.x, v2.x), std::fmin(v1.y, v2.y), std::fmin(v1.z, v2.z));
+    }
+
+    template <typename T>
+    Vector3<T> Max(const Vector3<T> &v1, const Vector3<T> &v2)
+    {
+        return Vector3<T>(std::fmax(v1.x, v2.x), std::fmax(v1.y, v2.y), std::fmax(v1.z, v2.z));
+    }
+
+    template <typename T>
+    Vector3<T> Permute(const Vector3<T> &v, int xIndex, int yIndex, int zIndex)
+    {
+        return Vector3<T>(v[xIndex], v[yIndex], v[zIndex]);
+    }
+
+    // 通过单个向量构建坐标系
+    // @remarks: v1应该是单位向量
+    template <typename T>
+    inline void CoordinateSystem(const Vector3<T> &v1, Vector3<T> *v2, Vector3<T> *v3)
+    {
+        // 把较小的分量置为0，可以防止出现(0, 0, 0)向量的情况
+        if (std::abs(v1.x) > std::abs(v1.y))
+        {
+            *v2 = Vector3<T>(-v1.z, 0, v1.x) / std::sqrt(v1.x * v1.x + v1.z * v1.z);
+        }
+        else
+        {
+            *v2 = Vector3<T>(0, v1.z, -v1.y) / std::sqrt(v1.y * v1.y + v1.z * v1.z);
+        }
+
+        *v3 = Cross(v1, *v2);
     }
 }
