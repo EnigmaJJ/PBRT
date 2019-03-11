@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 #include "PBRT.h"
 #include "glog/logging.h"
@@ -89,7 +89,7 @@ namespace PBRT
         }
 
         template <typename U>
-        Vector2<T>& operator/(U s)
+        Vector2<T>& operator/=(U s)
         {
             CHECK_NE(0, s);
             Float inv = (Float)1 / s;
@@ -207,7 +207,7 @@ namespace PBRT
         }
 
         template <typename U>
-        Vector3<T>& operator/(U s)
+        Vector3<T>& operator/=(U s)
         {
             CHECK_NE(0, s);
             Float inv = (Float)1 / s;
@@ -303,23 +303,41 @@ namespace PBRT
 
         Point2<T> operator+(const Vector2<T> &v) const
         {
+            DCHECK(!v.HasNaNs());
             return Point2<T>(x + v.x, y + v.y);
         }
 
         Point2<T> &operator+=(const Vector2<T> &v)
         {
+            DCHECK(!v.HasNaNs());
             x += v.x;
             y += v.y;
             return *this;
         }
 
+        Point2<T> operator+(const Point2<T> &p) const
+        {
+            DCHECK(!p.HasNaNs());
+            return Point2<T>(x + p.x, y + p.y);
+        }
+
+        Point2<T> &operator+=(const Point2<T> &p)
+        {
+            DCHECK(!p.HasNaNs());
+            x += p.x;
+            y += p.y;
+            return *this;
+        }
+
         Point2<T> operator-(const Vector2<T> &v) const
         {
+            DCHECK(!v.HasNaNs());
             return Point2<T>(x - v.x, y - v.y);
         }
 
         Point2<T> &operator-=(const Vector2<T> &v)
         {
+            DCHECK(!v.HasNaNs());
             x -= v.x;
             y -= v.y;
             return *this;
@@ -327,7 +345,58 @@ namespace PBRT
 
         Vector2<T> operator-(const Point2<T> &p) const
         {
+            DCHECK(!p.HasNaNs());
             return Vector2<T>(x - p.x, y - p.y);
+        }
+
+        template <typename U>
+        Point2<T> operator*(U s) const
+        {
+            DCHECK(!isNaN(s));
+            return Point2<T>(x * s, y * s);
+        }
+
+        template <typename U>
+        Point2<T>& operator*=(U s) const
+        {
+            DCHECK(!isNaN(s));
+            x *= s;
+            y *= s;
+            return *this;
+        }
+
+        template <typename U>
+        Point2<T> operator/(U s) const
+        {
+            CHECK_NE(0, s);
+            Float inv = (Float)1 / s;
+            return Point2<T>(x * inv, y * inv);
+        }
+
+        template <typename U>
+        Point2<T>& operator/=(U s)
+        {
+            CHECK_NE(0, s);
+            Float inv = (Float)1 / s;
+            x *= inv;
+            y *= inv;
+            return *this;
+        }
+
+        T operator[](int i) const
+        {
+            DCHECK((i >= 0) && (i <= 1));
+
+            if (0 == i) return x;
+            return y;
+        }
+
+        T& operator[](int i)
+        {
+            DCHECK((i >= 0) && (i <= 1));
+
+            if (0 == i) return x;
+            return y;
         }
 
         bool HasNaNs(void) const
@@ -384,19 +453,37 @@ namespace PBRT
 
         Point3<T> &operator+=(const Vector3<T> &v)
         {
+            DCHECK(!v.HasNaNs());
             x += v.x;
             y += v.y;
             z += v.z;
             return *this;
         }
 
+        Point3<T> operator+(const Point3<T> &p) const
+        {
+            DCHECK(!p.HasNaNs());
+            return Point3<T>(x + p.x, y + p.y, z + p.z);
+        }
+
+        Point3<T> &operator+=(const Point3<T> &p)
+        {
+            DCHECK(!p.HasNaNs());
+            x += p.x;
+            y += p.y;
+            z += p.z;
+            return *this;
+        }
+
         Point3<T> operator-(const Vector3<T> &v) const
         {
+            DCHECK(!v.HasNaNs());
             return Point3<T>(x - v.x, y - v.y, z - v.z);
         }
 
         Point3<T> &operator-=(const Vector3<T> &v)
         {
+            DCHECK(!v.HasNaNs());
             x -= v.x;
             y -= v.y;
             z -= v.z;
@@ -405,7 +492,62 @@ namespace PBRT
 
         Vector3<T> operator-(const Point3<T> &p) const
         {
+            DCHECK(!p.HasNaNs());
             return Vector3<T>(x - p.x, y - p.y, z - p.y);
+        }
+
+        template <typename U>
+        Point3<T> operator*(U s) const
+        {
+            DCHECK(!isNaN(s));
+            return Point3<T>(x * s, y * s, z * s);
+        }
+
+        template <typename U>
+        Point3<T>& operator*=(U s) const
+        {
+            DCHECK(!isNaN(s));
+            x *= s;
+            y *= s;
+            z *= s;
+            return *this;
+        }
+
+        template <typename U>
+        Point3<T> operator/(U s) const
+        {
+            CHECK_NE(0, s);
+            Float inv = (Float)1 / s;
+            return Point3<T>(x * inv, y * inv, z * inv);
+        }
+
+        template <typename U>
+        Point3<T>& operator/=(U s)
+        {
+            CHECK_NE(0, s);
+            Float inv = (Float)1 / s;
+            x *= inv;
+            y *= inv;
+            z *= inv;
+            return *this;
+        }
+
+        T operator[](int i) const
+        {
+            DCHECK((i >= 0) && (i <= 2));
+
+            if (0 == i) return x;
+            if (1 == i) return y;
+            return z;
+        }
+
+        T &operator[](int i)
+        {
+            DCHECK((i >= 0) && (i <= 2));
+
+            if (0 == i) return x;
+            if (1 == i) return y;
+            return z;
         }
 
         bool HasNaNs(void) const
@@ -426,6 +568,7 @@ namespace PBRT
     template <typename T, typename U>
     inline Vector2<T> operator*(U s, const Vector2<T> &v)
     {
+        DCHECK(!isNaN(s));
         return v * s;
     }
 
@@ -470,6 +613,7 @@ namespace PBRT
     template <typename T, typename U>
     inline Vector3<T> operator*(U s, const Vector3<T> &v)
     {
+        DCHECK(!isNaN(s));
         return v * s;
     }
 
@@ -494,7 +638,7 @@ namespace PBRT
     template <typename T>
     inline Vector3<T> Cross(const Vector3<T> &v1, const Vector3<T> &v2)
     {
-        // ±‹√‚µ•æ´∂»∏°µ„«Èøˆœ¬“˝∆µƒŒÛ≤Ó¥ÌŒÛ
+        // ÈÅøÂÖçÂçïÁ≤æÂ∫¶ÊµÆÁÇπÊÉÖÂÜµ‰∏ãÂºïËµ∑ÁöÑËØØÂ∑ÆÈîôËØØ
         double v1x = v1.x, v1y = v1.y, v1z = v1.z;
         double v2x = v2.x, v2y = v2.y, v2z = v2.z;
 
@@ -545,12 +689,12 @@ namespace PBRT
         return Vector3<T>(v[xIndex], v[yIndex], v[zIndex]);
     }
 
-    // Õ®π˝µ•∏ˆœÚ¡øππΩ®◊¯±Íœµ
-    // @remarks: v1”¶∏√ «µ•ŒªœÚ¡ø
+    // ÈÄöËøáÂçï‰∏™ÂêëÈáèÊûÑÂª∫ÂùêÊ†áÁ≥ª
+    // @remarks: v1Â∫îËØ•ÊòØÂçï‰ΩçÂêëÈáè
     template <typename T>
     inline void CoordinateSystem(const Vector3<T> &v1, Vector3<T> *v2, Vector3<T> *v3)
     {
-        // ∞—Ωœ–°µƒ∑÷¡ø÷√Œ™0£¨ø…“‘∑¿÷π≥ˆœ÷(0, 0, 0)œÚ¡øµƒ«Èøˆ
+        // ÊääËæÉÂ∞èÁöÑÂàÜÈáèÁΩÆ‰∏∫0ÔºåÂèØ‰ª•Èò≤Ê≠¢Âá∫Áé∞(0, 0, 0)ÂêëÈáèÁöÑÊÉÖÂÜµ
         if (std::abs(v1.x) > std::abs(v1.y))
         {
             *v2 = Vector3<T>(-v1.z, 0, v1.x) / std::sqrt(v1.x * v1.x + v1.z * v1.z);
@@ -561,5 +705,125 @@ namespace PBRT
         }
 
         *v3 = Cross(v1, *v2);
+    }
+
+    // --------------------------------------------------------------------
+    // Point2 functions
+    template <typename T, typename U>
+    inline Point2<T> operator*(U s, const Point2<T> &p)
+    {
+        DCHECK(!isNaN(s));
+        return p * s;
+    }
+
+    template <typename T>
+    inline Float Distance(const Point2<T> &p1, const Point2<T> &p2)
+    {
+        return (p1 - p2).Length();
+    }
+
+    template <typename T>
+    inline Float DistanceSquared(const Point2<T> &p1, const Point2<T> &p2)
+    {
+        return (p1 - p2).LengthSquared();
+    }
+
+    template <typename T>
+    Point2<T> Lerp(Float t, const Point2<T> &p1, const Point2<T> &p2)
+    {
+        return ((1 - t) * p1) + (t * p2);
+    }
+
+    template <typename T>
+    Point2<T> Min(const Point2<T> &p1, const Point2<T> &p2)
+    {
+        return Point2<T>(std::fmin(p1.x, p2.x), std::fmin(p1.y, p2.y));
+    }
+
+    template <typename T>
+    Point2<T> Max(const Point2<T> &p1, const Point2<T> &p2)
+    {
+        return Point2<T>(std::fmax(p1.x, p2.x), std::fmax(p1.y, p2.y));
+    }
+
+    template <typename T>
+    Point2<T> Floor(const Point2<T> &p)
+    {
+        return Point2<T>(std::floor(p.x), std::floor(p.y));
+    }
+
+    template <typename T>
+    Point2<T> Ceil(const Point2<T> &p)
+    {
+        return Point2<T>(std::ceil(p.x), std::ceil(p.y));
+    }
+
+    template <typename T>
+    Point2<T> Abs(const Point2<T> &p)
+    {
+        return Point2<T>(std::abs(p.x), std::abs(p.y));
+    }
+
+    // --------------------------------------------------------------------
+    // Point3 functions
+    template <typename T, typename U>
+    inline Point3<T> operator*(U s, const Point3<T> &p)
+    {
+        DCHECK(!isNaN(s));
+        return p * s;
+    }
+
+    template <typename T>
+    inline Float Distance(const Point3<T> &p1, const Point3<T> &p2)
+    {
+        return (p1 - p2).Length();
+    }
+
+    template <typename T>
+    inline Float DistanceSquared(const Point3<T> &p1, const Point3<T> &p2)
+    {
+        return (p1 - p2).LengthSquared();
+    }
+
+    template <typename T>
+    Point3<T> Lerp(Float t, const Point3<T> &p1, const Point3<T> &p2)
+    {
+        return ((1 - t) * p1) + (t * p2);
+    }
+
+    template <typename T>
+    Point3<T> Min(const Point3<T> &p1, const Point3<T> &p2)
+    {
+        return Point3<T>(std::fmin(p1.x, p2.x), std::fmin(p1.y, p2.y), std::fmin(p1.z, p2.z));
+    }
+
+    template <typename T>
+    Point3<T> Max(const Point3<T> &p1, const Point3<T> &p2)
+    {
+        return Point3<T>(std::fmax(p1.x, p2.x), std::fmax(p1.y, p2.y), std::fmax(p1.z, p2.z));
+    }
+
+    template <typename T>
+    Point3<T> Floor(const Point3<T> &p)
+    {
+        return Point3<T>(std::floor(p.x), std::floor(p.y), std::floor(p.z));
+    }
+
+    template <typename T>
+    Point3<T> Ceil(const Point3<T> &p)
+    {
+        return Point3<T>(std::ceil(p.x), std::ceil(p.y), std::ceil(p.z));
+    }
+
+    template <typename T>
+    Point3<T> Abs(const Point3<T> &p)
+    {
+        return Point3<T>(std::abs(p.x), std::abs(p.y), std::abs(p.z));
+    }
+
+    template <typename T>
+    Point3<T> Permute(const Point3<T> &p, int xIndex, int yIndex, int zIndex)
+    {
+        return Point3<T>(p[xIndex], p[yIndex], p[zIndex]);
     }
 }
