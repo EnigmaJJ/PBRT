@@ -147,6 +147,13 @@ namespace PBRT
             DCHECK(!HasNaNs());
         }
 
+        template <typename T>
+        explicit Vector3(const Normal3<T> &n)
+            : x(n.x), y(n.y), z(n.z)
+        {
+            DCHECK(!HasNaNs());
+        }
+
         bool HasNaNs(void) const
         {
             return isNaN(x) || isNaN(y) || isNaN(z);
@@ -563,6 +570,41 @@ namespace PBRT
     typedef Point3<Float> Point3f;
     typedef Point3<int>   Point3i;
 
+    template <typename T>
+    class Normal3
+    {
+    public:
+        Normal3(void)
+        {
+            x = y = z = 0;
+        }
+
+        Normal3(T x, T y, T z)
+            : x(x), y(y), z(z)
+        {
+            DCHECK(!HasNaNs());
+        }
+
+        template <typename T>
+        explicit Normal3(const Vector3<T> &v)
+            : x(v.x), y(v.y), z(v.z)
+        {
+            DCHECK(!HasNaNs());
+        }
+
+        Normal3<T> operator-(void) const
+        {
+            return Normal3<T>(-x, -y, -z);
+        }
+
+        bool HasNaNs(void) const
+        {
+            return isNaN(x) || isNaN(y) || isNaN(z);
+        }
+
+        T x, y, z;
+    };
+
     // --------------------------------------------------------------------
     // Vector2 functions
     template <typename T, typename U>
@@ -825,5 +867,67 @@ namespace PBRT
     Point3<T> Permute(const Point3<T> &p, int xIndex, int yIndex, int zIndex)
     {
         return Point3<T>(p[xIndex], p[yIndex], p[zIndex]);
+    }
+
+    // --------------------------------------------------------------------
+    // Normal3 functions
+    template <typename T>
+    Float Dot(const Normal3<T> &n, const Vector3<T> &v)
+    {
+        return (n.x * v.x + n.y * v.y + n.z * v.z);
+    }
+
+    template <typename T>
+    Float Dot(const Vector3<T> &v, const Normal3<T> &n)
+    {
+        return (v.x * n.x + v.y * n.y + v.z * n.z);
+    }
+
+    template <typename T>
+    Float Dot(const Normal3<T> &n1, const Normal3<T> &n2)
+    {
+        return (n1.x * n2.x + n1.y * n2.y + n1.z * n2.z);
+    }
+
+    template <typename T>
+    Float AbsDot(const Normal3<T> &n, const Vector3<T> &v)
+    {
+        return std::abs(n.x * v.x + n.y * v.y + n.z * v.z);
+    }
+
+    template <typename T>
+    Float AbsDot(const Vector3<T> &v, const Normal3<T> &n)
+    {
+        return std::abs(v.x * n.x + v.y * n.y + v.z * n.z);
+    }
+
+    template <typename T>
+    Float AbsDot(const Normal3<T> &n1, const Normal3<T> &n2)
+    {
+        return std::abs(n1.x * n2.x + n1.y * n2.y + n1.z * n2.z);
+    }
+
+    template <typename T>
+    inline Normal3<T> FaceForward(const Normal3<T> &n, const Vector3<T> &v)
+    {
+        return (Dot(n, v) < 0.0f) ? -n : n;
+    }
+
+    template <typename T>
+    inline Normal3<T> FaceForward(const Normal3<T> &n1, const Normal3<T> &n2)
+    {
+        return (Dot(n1, n2) < 0.0f) ? -n1 : n1;
+    }
+
+    template <typename T>
+    inline Vector3<T> FaceForward(const Vector3<T> &v, const Normal3<T> &n)
+    {
+        return (Dot(v, n) < 0.0f) ? -v : v;
+    }
+
+    template <typename T>
+    inline Vector3<T> FaceForward(const Vector3<T> &v1, const Vector3<T> &v2)
+    {
+        return (Dot(v1, v2) < 0.0f) ? -v1 : v1;
     }
 }
