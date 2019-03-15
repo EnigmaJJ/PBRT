@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "PBRT.h"
+#include "Medium.h"
 #include "glog/logging.h"
 
 namespace PBRT
@@ -603,6 +604,70 @@ namespace PBRT
         }
 
         T x, y, z;
+    };
+
+    class Ray
+    {
+    public:
+        Ray()
+            : tMax(Infinity), time(0.0f), medium(nullptr)
+        {}
+
+        Ray(const Point3f &origin
+          , const Vector3f &dir
+          , Float tMax = Infinity
+          , Float time = 0.0f
+          , const Medium *medium = nullptr)
+            : origin(origin), dir(dir), tMax(tMax), time(time), medium(medium)
+        {}
+
+        Point3f operator()(Float t) const
+        {
+            return (origin + (dir * t));
+        }
+
+        Point3f origin;
+        Vector3f dir;
+        mutable Float tMax;
+        Float time;
+        const Medium *medium;
+    };
+
+    class RayDifferential : public Ray
+    {
+    public:
+        RayDifferential()
+        {
+            hasDifferentials = false;
+        }
+
+        RayDifferential(const Point3f &origin
+                      , const Vector3f &dir
+                      , Float tMax = Infinity
+                      , Float time = 0.0f
+                      , const Medium *medium = nullptr)
+            : Ray(origin, dir, tMax, time, medium)
+        {
+            hasDifferentials = false;
+        }
+
+        RayDifferential(const Ray &ray)
+            : Ray(ray)
+        {
+            hasDifferentials = false;
+        }
+
+        void ScaleDifferentials(Float s)
+        {
+            rxOrigin = origin + ((rxOrigin - origin) * s);
+            ryOrigin = origin + ((ryOrigin - origin) * s);
+            rxDir = rxDir + ((rxDir - dir) * s);
+            ryDir = ryDir + ((ryDir - dir) * s);
+        }
+
+        bool hasDifferentials;
+        Point3f rxOrigin, ryOrigin;
+        Vector3f rxDir, ryDir;
     };
 
     // --------------------------------------------------------------------

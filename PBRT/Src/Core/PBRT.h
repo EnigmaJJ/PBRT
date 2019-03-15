@@ -1,4 +1,6 @@
-#pragma once
+﻿#pragma once
+
+#include <limits>
 
 namespace PBRT
 {
@@ -22,4 +24,11 @@ namespace PBRT
 #else
     typedef float Float;
 #endif // PBRT_FLOAT_AS_DOUBLE
+
+// 全局常量
+#ifdef _MSC_VER
+    #define Infinity std::numeric_limits<Float>::infinity()
+#else
+    static PBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
+#endif
 }
