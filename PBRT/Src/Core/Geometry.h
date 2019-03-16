@@ -281,6 +281,13 @@ namespace PBRT
             DCHECK(!HasNaNs());
         }
 
+        Point2(const Point2<T> &p)
+        {
+            DCHECK(!p.HasNaNs());
+            x = p.x;
+            y = p.y;
+        }
+
         explicit Point2(const Point3<T> &p)
             : x(p.x), y(p.y)
         {
@@ -428,6 +435,14 @@ namespace PBRT
             : x(x), y(y), z(z)
         {
             DCHECK(!HasNaNs());
+        }
+
+        Point3(const Point3<T> &p)
+        {
+            DCHECK(!p.HasNaNs());
+            x = p.x;
+            y = p.y;
+            z = p.z;
         }
 
         template <typename U>
@@ -669,6 +684,134 @@ namespace PBRT
         Point3f rxOrigin, ryOrigin;
         Vector3f rxDir, ryDir;
     };
+
+    template <typename T>
+    class Bounds2
+    {
+    public:
+        Bounds2()
+        {
+            T minNum = std::numeric_limits<T>::lowest();
+            T maxNum = std::numeric_limits<T>::max();
+            minPoint = Point2<T>(maxNum, maxNum);
+            maxPoint = Point2<T>(minNum, minNum);
+        }
+
+        Bounds2(const Point2<T> &p)
+            : minPoint(p), maxPoint(p)
+        {}
+
+        Bounds2(const Point2<T> &p1, const Point2<T> &p2)
+            : minPoint(std::fmin(p1.x, p2.x), std::fmin(p1.y, p2.y))
+            , maxPoint(std::fmax(p1.x, p2.x), std::fmax(p1.y, p2.y))
+        {}
+
+        Point2<T> &operator[](int i);
+        const Point2<T> &operator[](int i) const;
+
+        Point2<T> Corner(int corner) const
+        {
+            return Point2<T>((*this)[corner & 1].x, (*this)[(corner & 2) ? 1 : 0].y);
+        }
+
+        Vector2<T> Diagonal() const
+        {
+            return (maxPoint - minPoint);
+        }
+
+        int MaximumExtent() const
+        {
+            Vector2<T> diagonal = Diagonal();
+            return ((diagonal.x > diagonal.y) ? 0 : 1);
+        }
+
+        Point2<T> Lerp(const Point2f &t) const
+        {
+            return Point2f(::Lerp(t.x, minPoint.x, maxPoint.x), ::Lerp(t.y, minPoint.y, maxPoint.y));
+        }
+
+        Point2<T> minPoint, maxPoint;
+    };
+
+    template <typename T>
+    class Bounds3
+    {
+    public:
+        Bounds3()
+        {
+            T minNum = std::numeric_limits<T>::lowest();
+            T maxNum = std::numeric_limits<T>::max();
+            minPoint = Point3<T>(maxNum, maxNum, maxNum);
+            maxPoint = Point3<T>(minNum, minNum, minNum);
+        }
+
+        Bounds3(const Point3<T> &p)
+            : minPoint(p), maxPoint(p)
+        {}
+
+        Bounds3(const Point3<T> &p1, const Point3<T> &p2)
+            : minPoint(std::fmin(p1.x, p2.x), std::fmin(p1.y, p2.y), std::fmin(p1.z, p2.z))
+            , maxPoint(std::fmax(p1.x, p2.x), std::fmax(p1.y, p2.y), std::fmax(p1.z, p2.z))
+        {}
+
+        Point3<T> &operator[](int i);
+        const Point3<T> &operator[](int i) const;
+
+        Point3<T> Corner(int corner) const
+        {
+            return Point3<T>((*this)[corner & 1].x
+                           , (*this)[(corner & 2) ? 1 : 0].y
+                           , (*this)[(corner & 4) ? 1 : 0].z);
+        }
+
+        Vector3<T> Diagonal() const
+        {
+            return (maxPoint - minPoint);
+        }
+
+        T SurfaceArea() const
+        {
+            Vector3<T> diagonal = Diagonal();
+            return (2 * ((diagonal.x * diagonal.y) + (diagonal.y * diagonal.z) + (diagonal.x * diagonal.z)));
+        }
+
+        T Volume() const
+        {
+            Vector3<T> diagonal = Diagonal();
+            return (diagonal.x * diagonal.y * diagonal.z);
+        }
+
+        int MaximumExtent() const
+        {
+            Vector3<T> diagonal = Diagonal();
+            if ((diagonal.x > diagonal.y) && (diagonal.x > diagonal.z))
+            {
+                return 0;
+            }
+            else if (diagonal.y > diagonal.z)
+            {
+                return 1;
+            }
+            else
+            {
+                return 2;
+            }
+        }
+
+        Point3<T> Lerp(const Point3f &t) const
+        {
+            return Point3f(::Lerp(t.x, minPoint.x, maxPoint.x)
+                         , ::Lerp(t.y, minPoint.y, maxPoint.y)
+                         , ::Lerp(t.z, minPoint.z, maxPoint.z));
+        }
+
+        Point3<T> minPoint, maxPoint;
+    };
+
+    typedef Bounds2<Float> Bounds2f;
+    typedef Bounds2<int>   Bounds2i;
+    typedef Bounds3<Float> Bounds3f;
+    typedef Bounds3<int>   Bounds3i;
 
     // --------------------------------------------------------------------
     // Vector2 functions
@@ -994,5 +1137,158 @@ namespace PBRT
     inline Vector3<T> FaceForward(const Vector3<T> &v1, const Vector3<T> &v2)
     {
         return (Dot(v1, v2) < 0.0f) ? -v1 : v1;
+    }
+
+    // --------------------------------------------------------------------
+    // Bound2 functions
+    template <typename T>
+    inline Point2<T> &Bounds2<T>::operator[](int i)
+    {
+        DCHECK((0 == i) || (1 == i));
+        return (0 == i) ? minPoint : maxPoint;
+    }
+
+    template <typename T>
+    inline const Point2<T> &Bounds2<T>::operator[](int i) const
+    {
+        DCHECK((0 == i) || (1 == i));
+        return (0 == i) ? minPoint : maxPoint;
+    }
+
+    template <typename T>
+    Bounds2<T> Union(const Bounds2<T> &b, const Point2<T> &p)
+    {
+        return Bounds2<T>(Point2<T>(std::fmin(b.minPoint.x, p.x)
+                                  , std::fmin(b.minPoint.y, p.y))
+                        , Point2<T>(std::fmax(b.maxPoint.x, p.x)
+                                  , std::fmax(b.maxPoint.y, p.y)));
+    }
+
+    template <typename T>
+    Bounds2<T> Union(const Bounds2<T> &b1, const Bounds2<T> &b2)
+    {
+        return Bounds2<T>(Point2<T>(std::fmin(b1.minPoint.x, b2.minPoint.x)
+                                  , std::fmin(b1.minPoint.y, b2.minPoint.y))
+                        , Point2<T>(std::fmax(b1.maxPoint.x, b2.maxPoint.x)
+                                  , std::fmax(b1.maxPoint.y, b2.maxPoint.y)));
+    }
+
+    template <typename T>
+    Bounds2<T> Intersect(const Bounds2<T> &b1, const Bounds2<T> &b2)
+    {
+        return Bounds2<T>(Point2<T>(std::fmax(b1.minPoint.x, b2.minPoint.x)
+                                  , std::fmax(b1.minPoint.y, b2.minPoint.y))
+                        , Point2<T>(std::fmin(b1.maxPoint.x, b2.maxPoint.x)
+                                  , std::fmin(b1.maxPoint.y, b2.maxPoint.y)));
+    }
+
+    template <typename T>
+    bool Overlaps(const Bounds2<T> &b1, const Bounds2<T> &b2)
+    {
+        bool x = (b1.maxPoint.x >= b2.minPoint.x) && (b1.minPoint.x <= b2.maxPoint.x);
+        bool y = (b1.maxPoint.y >= b2.minPoint.y) && (b1.minPoint.y <= b2.maxPoint.y);
+        return (x && y);
+    }
+
+    template <typename T>
+    bool Inside(const Point2<T> &p, const Bounds2<T> &b)
+    {
+        return (p.x >= b.minPoint.x) && (p.x <= b.maxPoint.x)
+            && (p.y >= b.minPoint.y) && (p.y <= b.maxPoint.y);
+    }
+
+    template <typename T>
+    bool InsideExclusive(const Point2<T> &p, const Bounds2<T> &b)
+    {
+        return (p.x >= b.minPoint.x) && (p.x < b.maxPoint.x)
+            && (p.y >= b.minPoint.y) && (p.y < b.maxPoint.y);
+    }
+
+    template <typename T, typename U>
+    inline Bounds2<T> Expand(const Bounds2<T> &b, U delta)
+    {
+        return Bounds2<T>(b.minPoint - Vector2<U>(delta, delta)
+                        , b.maxPoint + Vector2<U>(delta, delta));
+    }
+
+    // --------------------------------------------------------------------
+    // Bound3 functions
+    template <typename T>
+    inline Point3<T> &Bounds3<T>::operator[](int i)
+    {
+        DCHECK((0 == i) || (1 == i));
+        return (0 == i) ? minPoint : maxPoint;
+    }
+
+    template <typename T>
+    inline const Point3<T> &Bounds3<T>::operator[](int i) const
+    {
+        DCHECK((0 == i) || (1 == i));
+        return (0 == i) ? minPoint : maxPoint;
+    }
+
+    template <typename T>
+    Bounds3<T> Union(const Bounds3<T> &b, const Point3<T> &p)
+    {
+        return Bounds3<T>(Point3<T>(std::fmin(b.minPoint.x, p.x)
+                                  , std::fmin(b.minPoint.y, p.y)
+                                  , std::fmin(b.minPoint.z, p.z))
+                        , Point3<T>(std::fmax(b.maxPoint.x, p.x)
+                                  , std::fmax(b.maxPoint.y, p.y)
+                                  , std::fmax(b.maxPoint.z, p.z)));
+    }
+
+    template <typename T>
+    Bounds3<T> Union(const Bounds3<T> &b1, const Bounds3<T> &b2)
+    {
+        return Bounds3<T>(Point3<T>(std::fmin(b1.minPoint.x, b2.minPoint.x)
+                                  , std::fmin(b1.minPoint.y, b2.minPoint.y)
+                                  , std::fmin(b1.minPoint.z, b2.minPoint.z))
+                        , Point3<T>(std::fmax(b1.maxPoint.x, b2.maxPoint.x)
+                                  , std::fmax(b1.maxPoint.y, b2.maxPoint.y)
+                                  , std::fmax(b1.maxPoint.z, b2.maxPoint.z)));
+    }
+
+    template <typename T>
+    Bounds3<T> Intersect(const Bounds3<T> &b1, const Bounds3<T> &b2)
+    {
+        return Bounds3<T>(Point3<T>(std::fmax(b1.minPoint.x, b2.minPoint.x)
+                                  , std::fmax(b1.minPoint.y, b2.minPoint.y)
+                                  , std::fmax(b1.minPoint.z, b2.minPoint.z))
+                        , Point3<T>(std::fmin(b1.maxPoint.x, b2.maxPoint.x)
+                                  , std::fmin(b1.maxPoint.y, b2.maxPoint.y)
+                                  , std::fmin(b1.maxPoint.z, b2.maxPoint.z)));
+    }
+
+    template <typename T>
+    bool Overlaps(const Bounds3<T> &b1, const Bounds3<T> &b2)
+    {
+        bool x = (b1.maxPoint.x >= b2.minPoint.x) && (b1.minPoint.x <= b2.maxPoint.x);
+        bool y = (b1.maxPoint.y >= b2.minPoint.y) && (b1.minPoint.y <= b2.maxPoint.y);
+        bool z = (b1.maxPoint.z >= b2.minPoint.z) && (b1.minPoint.z <= b2.maxPoint.z);
+        return (x && y && z);
+    }
+
+    template <typename T>
+    bool Inside(const Point3<T> &p, const Bounds3<T> &b)
+    {
+        return (p.x >= b.minPoint.x) && (p.x <= b.maxPoint.x)
+            && (p.y >= b.minPoint.y) && (p.y <= b.maxPoint.y)
+            && (p.z >= b.minPoint.z) && (p.z <= b.maxPoint.z);
+    }
+
+    template <typename T>
+    bool InsideExclusive(const Point3<T> &p, const Bounds3<T> &b)
+    {
+        return (p.x >= b.minPoint.x) && (p.x < b.maxPoint.x)
+            && (p.y >= b.minPoint.y) && (p.y < b.maxPoint.y)
+            && (p.z >= b.minPoint.z) && (p.z < b.maxPoint.z);
+    }
+
+    template <typename T, typename U>
+    inline Bounds3<T> Expand(const Bounds3<T> &b, U delta)
+    {
+        return Bounds3<T>(b.minPoint - Vector3<U>(delta, delta, delta)
+                        , b.maxPoint + Vector3<U>(delta, delta, delta));
     }
 }

@@ -31,4 +31,9 @@ namespace PBRT
 #else
     static PBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #endif
+
+    inline Float Lerp(Float t, Float v1, Float v2)
+    {
+        return (((1.0f - t) * v1) + (t * v2));
+    }
 }
